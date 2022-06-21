@@ -94,14 +94,20 @@ func (c *AllianceStoreInfo) GetStoreItemPos(capacityLeft, itemId, itemNum, index
 			ret = append(ret, c.GetStoreItemPos(capacityLeft, itemId, itemNum, index+1)...)
 		}
 
-		//当前位置道具ID相等&&未达到堆叠上限
-		if item.ID == itemId && item.Number < test_constant.STORE_ITEM_STACK_MAX_NUM {
-			//计算放入此格子内道具数量 = min(剩余容量,最大堆叠数量-己堆叠数量)
-			canStoreNum := int32(math.Min(float64(capacityLeft), float64(test_constant.STORE_ITEM_STACK_MAX_NUM-item.Number)))
-			//存储放入此格子道具数量
-			ret = append(ret, &getStoreItemPosInfo{pos: index - 1, item: &Item{ID: itemId, Number: canStoreNum}})
-			//继续计算下一个存放位置
-			ret = append(ret, c.GetStoreItemPos(capacityLeft-canStoreNum, itemId, itemNum-canStoreNum, index+1)...)
+		//当前位置道具ID相等
+		if item.ID == itemId {
+			//未达到堆叠上限
+			if item.Number < test_constant.STORE_ITEM_STACK_MAX_NUM {
+				//计算放入此格子内道具数量 = min(剩余容量,最大堆叠数量-己堆叠数量)
+				canStoreNum := int32(math.Min(float64(capacityLeft), float64(test_constant.STORE_ITEM_STACK_MAX_NUM-item.Number)))
+				//存储放入此格子道具数量
+				ret = append(ret, &getStoreItemPosInfo{pos: index - 1, item: &Item{ID: itemId, Number: canStoreNum}})
+				//继续计算下一个存放位置
+				ret = append(ret, c.GetStoreItemPos(capacityLeft-canStoreNum, itemId, itemNum-canStoreNum, index+1)...)
+			} else {
+				ret = append(ret, c.GetStoreItemPos(capacityLeft, itemId, itemNum, index+1)...)
+			}
+
 		}
 	}
 
