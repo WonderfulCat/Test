@@ -103,7 +103,7 @@ func SendMsgData(conn net.Conn, msg string) bool {
 		itemNum, _ := strconv.ParseInt(strings.TrimSpace(ss[2]), 10, 64)
 		itemIndex, _ := strconv.ParseInt(strings.TrimSpace(ss[3]), 10, 64)
 		data, _ = json.Marshal(&test_model.StoreItemRequestInfo{ItemId: int32(itemId), ItemNum: int32(itemNum), Index: int32(itemIndex)})
-	case "destoryItem":
+	case "destroyItem":
 		if len(ss) != 2 {
 			return false
 		}
