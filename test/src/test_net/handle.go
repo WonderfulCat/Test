@@ -5,14 +5,24 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"time"
 )
 
-func HandleClient(conn net.Conn) {
+var WorkerChan chan *WorkerChanInfo
 
+type WorkerChanInfo struct {
+	Conn *ConnTest
+	Msg  *Message
+}
+
+func init() {
+	WorkerChan = make(chan *WorkerChanInfo, 2048)
+	go Worker()
+}
+
+func HandleClient(conn net.Conn) {
 	//声明一个管道用于接收解包的数据
-	readChannel := make(chan *Message, 16)
-	go Read(NewConnTest(conn, ""), readChannel, 64)
+	readChannel := make(chan *Message, 32)
+	go Read(NewConnTest(conn, ""), readChannel)
 
 	for {
 		// 创建拆包解包的对象
@@ -48,17 +58,20 @@ func HandleClient(conn net.Conn) {
 	}
 }
 
-func Read(conn *ConnTest, readeChannel <-chan *Message, timeout int) {
+func Read(conn *ConnTest, readChannel <-chan *Message) {
 	for {
 		select {
-		case data := <-readeChannel:
-			conn.Conn.SetDeadline(time.Now().Add(time.Duration(timeout) * time.Second))
-			Deal(conn, data)
-			break
-		case <-time.After(time.Duration(timeout) * time.Second):
-			conn.Conn.Close()
-			fmt.Println("connection is closed.")
-			return
+		case data := <-readChannel:
+			WorkerChan <- &WorkerChanInfo{Conn: conn, Msg: data}
+		}
+	}
+}
+
+func Worker() {
+	for {
+		select {
+		case data := <-WorkerChan:
+			Deal(data.Conn, data.Msg)
 		}
 	}
 }
