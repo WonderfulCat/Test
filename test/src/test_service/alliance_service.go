@@ -47,8 +47,12 @@ func CreateAlliance(conn *test_net.ConnTest, message *test_net.Message) *test_mo
 	if character == nil {
 		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_17}
 	}
+
 	if len(character.GetAllianceName()) > 0 {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_11}
+		_, ok := test_common.CacheMap.AllianceGetByName(character.GetAllianceName())
+		if ok {
+			return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_11}
+		}
 	}
 
 	//创建
