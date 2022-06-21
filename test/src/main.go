@@ -37,10 +37,9 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-
+	fmt.Println("服务器启动: ", "0.0.0.0:8081")
+	
 	for {
-		fmt.Println("服务器启动: ", "0.0.0.0:8081")
-
 		conn, err := listener.Accept()
 		if err != nil {
 			fmt.Println("监听错误: ", err.Error())
