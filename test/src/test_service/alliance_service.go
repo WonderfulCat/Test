@@ -25,7 +25,7 @@ func WhichAlliance(conn *test_net.ConnTest, message *test_net.Message) *test_mod
 	alliance, ok := test_common.CacheMap.AllianceGetByName(character.GetAllianceName())
 	if !ok || alliance == nil {
 		character.SetAllianceName("")
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_9}
+		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_4}
 	}
 
 	return &test_model.ResponseInfo{Code: test_constant.RES_OK, Msg: alliance.GetMemberList()}
