@@ -1,23 +1,25 @@
 package test_impl
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"test/src/test_constant"
-	"test/src/test_model"
+	"test/src/test_pb"
 )
 
 type AllianceStoreInfo struct {
-	IncreaseCapacityCount int32   //己扩容次数
-	CapacityLeft          int32   //当前仓库剩余容量 (未使用格子数*每格最大堆叠数)
-	Items                 []*Item //仓库物品信息 (index: 0 ~ CapacityCur-1)
+	IncreaseCapacityCount int32               //己扩容次数
+	CapacityLeft          int32               //当前仓库剩余容量 (未使用格子数*每格最大堆叠数)
+	Items                 []*test_pb.TestItem //仓库物品信息 (index: 0 ~ CapacityCur-1)
 }
 
 //堆叠物品返回信息
 type getStoreItemPosInfo struct {
-	pos  int32 //堆叠位置
-	item *Item //堆叠物品信息
+	pos  int32             //堆叠位置
+	item *test_pb.TestItem //堆叠物品信息
 }
 
 func InitAllianceStoreInfo() *AllianceStoreInfo {
@@ -25,31 +27,31 @@ func InitAllianceStoreInfo() *AllianceStoreInfo {
 		IncreaseCapacityCount: 0,
 		CapacityLeft:          test_constant.STORE_INIT_CAPACITY * test_constant.STORE_ITEM_STACK_MAX_NUM,
 		//初始化仓库容量 = 基本大小+可扩容次数*单次可扩容空间.  为减少slice后续扩容消耗, cap空间可以分配更大一些, 以备后续扩展.
-		Items: make([]*Item, test_constant.STORE_INIT_CAPACITY, test_constant.STORE_INIT_CAPACITY+test_constant.STORE_INCREASE_CAPACITY_COUNT*test_constant.STORE_INCREASE_CAPACITY),
+		Items: make([]*test_pb.TestItem, test_constant.STORE_INIT_CAPACITY, test_constant.STORE_INIT_CAPACITY+test_constant.STORE_INCREASE_CAPACITY_COUNT*test_constant.STORE_INCREASE_CAPACITY),
 	}
 }
 
-func (c *AllianceStoreInfo) IncreaseCapacity() *test_model.ResponseInfo {
+func (c *AllianceStoreInfo) IncreaseCapacity() (bool, error) {
 	if c.IncreaseCapacityCount >= test_constant.STORE_INCREASE_CAPACITY_COUNT {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_1}
+		return false, errors.New(test_constant.RES_ERR_MSG_1)
 	}
 
 	//adding len for slice
 	c.IncreaseCapacityCount++
 	c.CapacityLeft += test_constant.STORE_INCREASE_CAPACITY * test_constant.STORE_ITEM_STACK_MAX_NUM
-	c.Items = append(c.Items, make([]*Item, test_constant.STORE_INCREASE_CAPACITY)...)
+	c.Items = append(c.Items, make([]*test_pb.TestItem, test_constant.STORE_INCREASE_CAPACITY)...)
 
-	return &test_model.ResponseInfo{Code: test_constant.RES_OK}
+	return true, fmt.Errorf(test_constant.RES_ERR_MSG_22, len(c.Items))
 }
 
-func (c *AllianceStoreInfo) StoreItem(itemId, itemNum, index int32) *test_model.ResponseInfo {
+func (c *AllianceStoreInfo) StoreItem(itemId, itemNum, index int32) (bool, error) {
 	if index <= 0 || index > int32(len(c.Items)) {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_3}
+		return false, errors.New(test_constant.RES_ERR_MSG_3)
 	}
 
 	pos := c.GetStoreItemPos(c.CapacityLeft, itemId, itemNum, index)
 	if pos == nil {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_6}
+		return false, errors.New(test_constant.RES_ERR_MSG_6)
 	}
 
 	//己放入仓库道具数量
@@ -57,7 +59,7 @@ func (c *AllianceStoreInfo) StoreItem(itemId, itemNum, index int32) *test_model.
 
 	for _, v := range pos {
 		if c.Items[v.pos] == nil {
-			c.Items[v.pos] = &Item{ID: v.item.ID, Number: v.item.Number}
+			c.Items[v.pos] = &test_pb.TestItem{Id: v.item.Id, Number: v.item.Number}
 		} else {
 			c.Items[v.pos].Number += v.item.Number
 		}
@@ -68,7 +70,8 @@ func (c *AllianceStoreInfo) StoreItem(itemId, itemNum, index int32) *test_model.
 		c.CapacityLeft -= v.item.Number
 	}
 
-	return &test_model.ResponseInfo{Code: test_constant.RES_OK, Msg: fmt.Sprintf(test_constant.RES_ERR_MSG_7, usedNum, itemNum-int32(usedNum))}
+	return true, fmt.Errorf(test_constant.RES_ERR_MSG_7, usedNum, itemNum-int32(usedNum))
+
 }
 
 //获取堆叠物品放置信息
@@ -85,23 +88,23 @@ func (c *AllianceStoreInfo) GetStoreItemPos(capacityLeft, itemId, itemNum, index
 		//计算放入当前格子内道具数量 = min(剩余容量,min(道具数量,最大堆叠数))
 		num := int32(math.Min(float64(capacityLeft), math.Min(float64(itemNum), float64(test_constant.STORE_ITEM_STACK_MAX_NUM))))
 		//存储放入此格子道具数量
-		ret = append(ret, &getStoreItemPosInfo{pos: index - 1, item: &Item{ID: itemId, Number: num}})
+		ret = append(ret, &getStoreItemPosInfo{pos: index - 1, item: &test_pb.TestItem{Id: itemId, Number: num}})
 		//继续计算下一个存放位置
 		ret = append(ret, c.GetStoreItemPos(capacityLeft-num, itemId, itemNum-num, index+1)...)
 	} else {
 		//当前位置道具ID不同则继续判断下一个格子
-		if item.ID != itemId {
+		if item.Id != itemId {
 			ret = append(ret, c.GetStoreItemPos(capacityLeft, itemId, itemNum, index+1)...)
 		}
 
 		//当前位置道具ID相等
-		if item.ID == itemId {
+		if item.Id == itemId {
 			//未达到堆叠上限
 			if item.Number < test_constant.STORE_ITEM_STACK_MAX_NUM {
 				//计算放入此格子内道具数量 = min(剩余容量,最大堆叠数量-己堆叠数量)
 				canStoreNum := int32(math.Min(float64(capacityLeft), float64(test_constant.STORE_ITEM_STACK_MAX_NUM-item.Number)))
 				//存储放入此格子道具数量
-				ret = append(ret, &getStoreItemPosInfo{pos: index - 1, item: &Item{ID: itemId, Number: canStoreNum}})
+				ret = append(ret, &getStoreItemPosInfo{pos: index - 1, item: &test_pb.TestItem{Id: itemId, Number: canStoreNum}})
 				//继续计算下一个存放位置
 				ret = append(ret, c.GetStoreItemPos(capacityLeft-canStoreNum, itemId, itemNum-canStoreNum, index+1)...)
 			} else {
@@ -114,21 +117,21 @@ func (c *AllianceStoreInfo) GetStoreItemPos(capacityLeft, itemId, itemNum, index
 	return ret
 }
 
-func (c *AllianceStoreInfo) DestoryItem(index int32) *test_model.ResponseInfo {
+func (c *AllianceStoreInfo) DestoryItem(index int32) (bool, error) {
 	//index check
 	if index <= 0 || index > int32(len(c.Items)) {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_3}
+		return false, errors.New(test_constant.RES_ERR_MSG_3)
 	}
 
 	//item check
 	if i := c.Items[index-1]; i == nil {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_2}
+		return false, errors.New(test_constant.RES_ERR_MSG_2)
 	}
 
 	//deal
 	c.CapacityLeft += c.Items[index-1].Number
 	c.Items[index-1] = nil
-	return &test_model.ResponseInfo{Code: test_constant.RES_OK}
+	return true, fmt.Errorf(test_constant.RES_ERR_MSG_24, index)
 }
 
 func (c *AllianceStoreInfo) ClearUp() {
@@ -141,11 +144,11 @@ func (c *AllianceStoreInfo) ClearUp() {
 			continue
 		}
 
-		if _, ok := tempMap[int(v.ID)]; ok {
-			tempMap[int(v.ID)] += v.Number
+		if _, ok := tempMap[int(v.Id)]; ok {
+			tempMap[int(v.Id)] += v.Number
 		} else {
-			tempMap[int(v.ID)] = v.Number
-			tempKeySlice = append(tempKeySlice, int(v.ID))
+			tempMap[int(v.Id)] = v.Number
+			tempKeySlice = append(tempKeySlice, int(v.Id))
 		}
 
 		//清空仓库
@@ -170,7 +173,22 @@ func (c *AllianceStoreInfo) ClearUpPutItems(itemId, itemNum, index int32) int32 
 	}
 
 	setNum := int32(math.Min(float64(itemNum), test_constant.STORE_ITEM_STACK_MAX_NUM))
-	c.Items[index] = &Item{ID: itemId, Number: setNum}
+	c.Items[index] = &test_pb.TestItem{Id: itemId, Number: setNum}
 
 	return c.ClearUpPutItems(itemId, itemNum-setNum, index+1)
+}
+
+func (c *AllianceStoreInfo) GetStoreList() string {
+	var ret bytes.Buffer
+
+	for k, v := range c.Items {
+		if v == nil {
+			continue
+		}
+
+		ret.WriteString(fmt.Sprintf("物品ID:%d|物品数量:%d|物品格子:%d === ", v.Id, v.Number, k+1))
+
+	}
+
+	return ret.String()
 }

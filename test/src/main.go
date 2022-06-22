@@ -2,51 +2,50 @@ package main
 
 import (
 	"fmt"
-	"net"
-	"reflect"
-	"test/src/test_common"
-	"test/src/test_constant"
-	"test/src/test_impl"
-	"test/src/test_net"
+	"os"
+	"os/signal"
+	"syscall"
+	"test/src/test_net/net_impl"
 	"test/src/test_service"
 )
 
-func init() {
-	test_common.RegisterI(test_constant.REGISTER_NAME_CACHE, reflect.TypeOf((*test_impl.Cache)(nil)).Elem())
-	test_common.RegisterI(test_constant.REGISTER_NAME_CHARACTER, reflect.TypeOf((*test_impl.CharacterInfo)(nil)).Elem())
-	test_common.RegisterI(test_constant.REGISTER_NAME_ALLIANCE, reflect.TypeOf((*test_impl.AllianceInfo)(nil)).Elem())
+func main() {
+	//初始化服务器
+	s := net_impl.NewServer("0.0.0.0", 8080)
+	//初始化struct
+	test_service.InitStructRouter()
+	//初始化缓存
+	test_service.InitCache()
+	//初始化router
+	test_service.InitRouter(s)
+	//初始化data
+	test_service.InitItemData("testItem.data")
+	//启动
+	s.Start()
 
-	//router
-	test_net.RegisterRouter(1000, test_service.Login)
-	test_net.RegisterRouter(1001, test_service.WhichAlliance)
-	test_net.RegisterRouter(1002, test_service.CreateAlliance)
-	test_net.RegisterRouter(1003, test_service.JoinAlliance)
-	test_net.RegisterRouter(1004, test_service.DismissAlliance)
-	test_net.RegisterRouter(1005, test_service.IncreaseCapacity)
-	test_net.RegisterRouter(1006, test_service.StoreItem)
-	test_net.RegisterRouter(1007, test_service.DestoryItem)
-	test_net.RegisterRouter(1008, test_service.ClearUp)
-	test_net.RegisterRouter(1009, test_service.AllianceList)
+	//关闭HOOKS
+	WaitExit(closeServer)
 }
 
-func main() {
-	test_service.InitCache()
+func WaitExit(beforeExit ...func()) {
+	catch := make(chan os.Signal, 1)
 
-	listener, err := net.Listen("tcp", "0.0.0.0:8081")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Println("服务器启动: ", "0.0.0.0:8081")
-	
-	for {
-		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Println("监听错误: ", err.Error())
-			continue
-		}
+	signal.Notify(catch, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 
-		go test_net.HandleClient(conn)
+	for sig := range catch {
+		fmt.Printf("System signal is caught (%v) \n", sig.String())
+		break
 	}
 
+	close(catch)
+
+	for _, fn := range beforeExit {
+		fn()
+	}
+}
+
+//close
+func closeServer() {
+	//关闭前保存数据
+	fmt.Println("Server Stopped")
 }

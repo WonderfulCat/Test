@@ -1,7 +1,5 @@
 package test_interface
 
-import "test/src/test_model"
-
 type AllianceI interface {
 	Build(name string)
 	AllianceOpeartionI
@@ -11,17 +9,18 @@ type AllianceI interface {
 //公会基础操作
 type AllianceOpeartionI interface {
 	CheckPermission(cname string, permission int32) bool
-	CreateAlliance(aname string) *test_model.ResponseInfo
-	JoinAlliance(cname string, permission int32) *test_model.ResponseInfo
-	DismissAlliance(aname string) *test_model.ResponseInfo
+	CreateAlliance(aname string) bool
+	JoinAlliance(cname string, permission int32) (bool, error)
+	DismissAlliance(aname string) (bool, error)
 	GetMemberList() string
 	GetName() string
 }
 
 //公会仓库操作
 type AllianceStoreOpeartionI interface {
-	IncreaseCapacity() *test_model.ResponseInfo
-	StoreItem(itemId, itemNum, index int32) *test_model.ResponseInfo
-	DestoryItem(index int32) *test_model.ResponseInfo
+	IncreaseCapacity() (bool, error)
+	StoreItem(itemId, itemNum, index int32) (bool, error)
+	DestoryItem(index int32) (bool, error)
+	GetStoreList() string
 	ClearUp()
 }

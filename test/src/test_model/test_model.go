@@ -52,3 +52,6 @@ type DestoryItemRequestInfo struct {
 type ClearUpRequestInfo struct {
 	CName string `json:"cname"`
 }
+
+type GetItemList struct {
+}

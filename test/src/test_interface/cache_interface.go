@@ -1,7 +1,5 @@
 package test_interface
 
-import "test/src/test_model"
-
 type CacheI interface {
 	Build()
 	CacheCharacterI
@@ -9,7 +7,7 @@ type CacheI interface {
 }
 
 type CacheCharacterI interface {
-	CharacterGetByNamePswd(name, pswd string) (CharacterI, *test_model.ResponseInfo)
+	CharacterGetByNamePswd(name, pswd string) (CharacterI, int32)
 	CharacterAdd(character CharacterI) bool
 	CharacterGetByName(name string) CharacterI
 }

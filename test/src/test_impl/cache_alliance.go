@@ -33,13 +33,14 @@ func (c *CacheAlliance) AllianceAdd(alliance test_interface.AllianceI) bool {
 
 func (c *CacheAlliance) AllianceRemove(name string) {
 	delete(c.AllianceMap, name)
+
 }
 
 func (c *CacheAlliance) AllianceList() string {
 	var ret bytes.Buffer
 
 	for k := range c.AllianceMap {
-		ret.WriteString(k + "\n")
+		ret.WriteString(k + "/")
 	}
 	return ret.String()
 }

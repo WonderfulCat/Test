@@ -2,8 +2,8 @@ package test_impl
 
 import (
 	"bytes"
+	"errors"
 	"test/src/test_constant"
-	"test/src/test_model"
 )
 
 type AllianceInfo struct {
@@ -32,28 +32,28 @@ func (c *AllianceInfo) GetMemberList() string {
 	return ret.String()
 }
 
-func (c *AllianceInfo) CreateAlliance(aname string) *test_model.ResponseInfo {
-	return &test_model.ResponseInfo{Code: test_constant.RES_OK}
+func (c *AllianceInfo) CreateAlliance(aname string) bool {
+	return true
 }
 
-func (c *AllianceInfo) JoinAlliance(cname string, permission int32) *test_model.ResponseInfo {
+func (c *AllianceInfo) JoinAlliance(cname string, permission int32) (bool, error) {
 	if len(c.Members) >= test_constant.ALLIANCE_MAX_MEMBERS {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_5}
+		return false, errors.New(test_constant.RES_ERR_MSG_5)
 	}
 
 	if _, ok := c.Members[cname]; ok {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_10}
+		return false, errors.New(test_constant.RES_ERR_MSG_10)
 	}
 
 	c.Members[cname] = AddMember(cname, permission)
-	return &test_model.ResponseInfo{Code: test_constant.RES_OK}
+	return true, nil
 }
 
-func (c *AllianceInfo) DismissAlliance(cname string) *test_model.ResponseInfo {
+func (c *AllianceInfo) DismissAlliance(cname string) (bool, error) {
 	if !c.CheckPermission(cname, test_constant.MEMBER_PERMISSION_ADMIN) {
-		return &test_model.ResponseInfo{Code: test_constant.RES_ERR, Msg: test_constant.RES_ERR_MSG_15}
+		return false, errors.New(test_constant.RES_ERR_MSG_15)
 	}
-	return &test_model.ResponseInfo{Code: test_constant.RES_OK}
+	return true, nil
 }
 
 func (c *AllianceInfo) CheckPermission(cname string, permission int32) bool {
