@@ -13,9 +13,3 @@ RUN cp /opt/test/config/testItem.data /opt/test/src
 EXPOSE 8080
 
 ENTRYPOINT [ "/opt/test/src/app" ]
-
-
-
-
-
-
