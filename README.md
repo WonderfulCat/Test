@@ -135,9 +135,9 @@
 1.SERVER端可在/src/main.go 中进行修改.
 ```
 ```
-映射端口可自行更改:
-Dockerfile 暴露端口为: 8080
-docker-compose 中对外映射端口同为 : 8080
+映射端口更改:
+1. 修改/test/Dockerfile 暴露端口默认为: 8080 
+2. 修改/test/docker-compose.yml 中对外映射默认端口同为 : 8080
 ```
 
 
