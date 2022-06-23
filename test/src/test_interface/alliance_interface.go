@@ -1,7 +1,9 @@
 package test_interface
 
+import "test/src/test_pb"
+
 type AllianceI interface {
-	Build(name string)
+	Build(name string, itemData *test_pb.TestItem_Array)
 	AllianceOpeartionI
 	AllianceStoreOpeartionI
 }

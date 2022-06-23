@@ -97,7 +97,7 @@ func (c *CreateAllianceHandle) CreateAlliance(request net_interface.RequestI) *t
 
 	//创建
 	alliance := GetReflectByName(test_constant.REGISTER_NAME_ALLIANCE).(test_interface.AllianceI)
-	alliance.Build(info.AName)
+	alliance.Build(info.AName, test_common.ItemData)
 	//设置权限
 	alliance.JoinAlliance(character.GetName(), test_constant.MEMBER_PERMISSION_ADMIN)
 	//缓存

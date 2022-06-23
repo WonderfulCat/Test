@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"test/src/test_constant"
+	"test/src/test_pb"
 )
 
 type AllianceInfo struct {
@@ -12,9 +13,9 @@ type AllianceInfo struct {
 	*AllianceStoreInfo
 }
 
-func (c *AllianceInfo) Build(name string) {
+func (c *AllianceInfo) Build(name string, itemData *test_pb.TestItem_Array) {
 	c.Name = name
-	c.AllianceStoreInfo = InitAllianceStoreInfo()
+	c.AllianceStoreInfo = InitAllianceStoreInfo(itemData)
 	c.Members = make(map[string]*Member, test_constant.ALLIANCE_MAX_MEMBERS)
 
 }

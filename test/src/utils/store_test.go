@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"test/src/test_common"
 	"test/src/test_impl"
 	"test/src/test_pb"
 	"testing"
@@ -12,7 +13,7 @@ import (
 )
 
 func TestStore(t *testing.T) {
-	all := test_impl.InitAllianceStoreInfo()
+	all := test_impl.InitAllianceStoreInfo(test_common.ItemData)
 	all.StoreItem(2, 5, 1)
 	all.StoreItem(2, 100, 1)
 	all.StoreItem(1, 5, 2)

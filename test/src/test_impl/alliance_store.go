@@ -22,13 +22,22 @@ type getStoreItemPosInfo struct {
 	item *test_pb.TestItem //堆叠物品信息
 }
 
-func InitAllianceStoreInfo() *AllianceStoreInfo {
-	return &AllianceStoreInfo{
+func InitAllianceStoreInfo(itemData *test_pb.TestItem_Array) *AllianceStoreInfo {
+	ret := &AllianceStoreInfo{
 		IncreaseCapacityCount: 0,
 		CapacityLeft:          test_constant.STORE_INIT_CAPACITY * test_constant.STORE_ITEM_STACK_MAX_NUM,
 		//初始化仓库容量 = 基本大小+可扩容次数*单次可扩容空间.  为减少slice后续扩容消耗, cap空间可以分配更大一些, 以备后续扩展.
 		Items: make([]*test_pb.TestItem, test_constant.STORE_INIT_CAPACITY, test_constant.STORE_INIT_CAPACITY+test_constant.STORE_INCREASE_CAPACITY_COUNT*test_constant.STORE_INCREASE_CAPACITY),
 	}
+
+	//初始化仓库
+	if itemData != nil {
+		for i, v := range itemData.Items {
+			ret.StoreItem(v.Id, v.Number, int32(i+1))
+		}
+	}
+
+	return ret
 }
 
 func (c *AllianceStoreInfo) IncreaseCapacity() (bool, error) {
